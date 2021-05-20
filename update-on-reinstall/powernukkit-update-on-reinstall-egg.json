@@ -1,0 +1,59 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2021-05-19T23:35:29-03:00",
+    "name": "PowerNukkit",
+    "author": "joserobjr@powernukkit.org",
+    "description": "A modified version of Nukkit, a Bedrock Edition Minecraft server software made in Java, which adds support to a huge amount of features like water-logging, all new blocks, more plugin events, offhand slot, bug fixes and many more.",
+    "features": null,
+    "images": [
+        "quay.io\/pterodactyl\/core:java"
+    ],
+    "file_denylist": [],
+    "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -Dterminal.jline=false -Dterminal.ansi=true -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https:\/\/mcflags.emc.gs -Daikars.new.flags=true -jar {{SERVER_JARFILE}}",
+    "config": {
+        "files": "{\r\n    \"server.properties\": {\r\n        \"parser\": \"properties\",\r\n        \"find\": {\r\n            \"server-ip\": \"0.0.0.0\",\r\n            \"server-port\": \"{{server.build.default.port}}\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"\\\"help\\\"\"\r\n}",
+        "logs": "{}",
+        "stop": "stop"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# PowerNukkit Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\napt update\r\napt install -y curl jq\r\n\r\nif [ -n \"${DL_PATH}\" ]; then\r\n    echo -e \"Using supplied download url: ${DL_PATH}\"\r\n    DOWNLOAD_URL=`eval echo $(echo ${DL_PATH} | sed -e 's\/{{\/${\/g' -e 's\/}}\/}\/g')`\r\nelse\r\n    LAST_SUCCESS=`curl -sLH 'accept: application\/json' -X 'GET' \"https:\/\/builds.powernukkit.org\/app\/rest\/builds\/?locator=buildType:${RELEASE_CHANNEL},status:success,count:1\"`\r\n    EXISTS=`echo \"$LAST_SUCCESS\" | jq '.count == 1' 2> \/dev\/null`\r\n    if [ \"${EXISTS}\" != \"true\" ]; then\r\n        RELEASE_CHANNEL=PowerNukkit_Releases\r\n        LAST_SUCCESS=`curl -sLH 'accept: application\/json' -X 'GET' \"https:\/\/builds.powernukkit.org\/app\/rest\/builds\/?locator=buildType:${RELEASE_CHANNEL},status:success,count:1\"`\r\n        EXISTS=`echo \"$LAST_SUCCESS\" | jq '.count == 1' 2> \/dev\/null`\r\n        if [ \"${EXISTS}\" != \"true\" ]; then\r\n            echo \"Could not update the server jar!\"\r\n        fi\r\n    fi\r\n    if [ \"${EXISTS}\" == \"true\" ]; then\r\n        BUILD_NUMBER=`echo \"$LAST_SUCCESS\" | jq '.build[0].id'`\r\n        FILE=`curl -sLH 'accept: application\/json' -X 'GET' \"https:\/\/builds.powernukkit.org\/app\/rest\/builds\/${BUILD_NUMBER}\/artifacts\"`\r\n        FILE=`echo $FILE | jq '.file[] | select(.name | endswith(\"-shaded.jar\")) | .content.href' 2> \/dev\/null`\r\n        if [ -z \"$FILE\" ]; then\r\n            echo \"Could not find the artifact of the build $BUILD_NUMBER to update the server jar!\"\r\n        else\r\n            DOWNLOAD_URL=`echo \"https:\/\/builds.powernukkit.org$FILE\" | sed 's\/\"\/\/g'`\r\n\t\t\techo \"Found a download at $DOWNLOAD_URL\"\r\n        fi\r\n    fi\r\nfi\r\n\r\ncd \/mnt\/server\r\necho -e \"Running curl -Lo ${SERVER_JARFILE} ${DOWNLOAD_URL}\"\r\nif [ -f \"${SERVER_JARFILE}\" ]; then\r\n    mv \"${SERVER_JARFILE}\" \"${SERVER_JARFILE}.old\"\r\nfi\r\n\r\ncurl -Lo \"${SERVER_JARFILE}\" \"${DOWNLOAD_URL}\"\r\nif [ ! -f server.properties ]; then\r\n    echo '#Minecraft server properties' > server.properties\r\n    echo 'server-port=19132' >> server.properties\r\n    echo 'server-ip=0.0.0.0' >> server.properties\r\nfi",
+            "container": "debian:buster-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Download Path",
+            "description": "A URL to use to download a server.jar rather than the ones in the install script. This is not user viewable.",
+            "env_variable": "DL_PATH",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "nullable|string"
+        },
+        {
+            "name": "Release Channel",
+            "description": "",
+            "env_variable": "RELEASE_CHANNEL",
+            "default_value": "PowerNukkit_Mc1_16_220",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:255"
+        },
+        {
+            "name": "SERVER_JARFILE",
+            "description": "The name of the server jarfile to run the server with.",
+            "env_variable": "SERVER_JARFILE",
+            "default_value": "PowerNukkit.jar",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:20"
+        }
+    ]
+}
