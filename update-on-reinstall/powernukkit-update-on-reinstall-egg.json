@@ -41,7 +41,7 @@
             "name": "Release Channel",
             "description": "",
             "env_variable": "RELEASE_CHANNEL",
-            "default_value": "PowerNukkit_Mc1_16_220",
+            "default_value": "PowerNukkit_Releases",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string|max:255"
