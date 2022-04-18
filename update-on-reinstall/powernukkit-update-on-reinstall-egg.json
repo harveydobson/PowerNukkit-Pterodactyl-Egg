@@ -4,13 +4,13 @@
         "version": "PTDL_v1",
         "update_url": null
     },
-    "exported_at": "2021-05-11T12:43:00-03:00",
-    "name": "PowerNukkit",
+    "exported_at": "2022-04-18T18:38:38-03:00",
+    "name": "PowerNukkit (Update on Reinstall)",
     "author": "joserobjr@powernukkit.org",
     "description": "A modified version of Nukkit, a Bedrock Edition Minecraft server software made in Java, which adds support to a huge amount of features like water-logging, all new blocks, more plugin events, offhand slot, bug fixes and many more.",
     "features": null,
     "images": [
-        "quay.io\/pterodactyl\/core:java"
+        "ghcr.io\/pterodactyl\/yolks:java_8"
     ],
     "file_denylist": [],
     "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -Dterminal.jline=false -Dterminal.ansi=true -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https:\/\/mcflags.emc.gs -Daikars.new.flags=true -Dlog4j2.formatMsgNoLookups=true -jar {{SERVER_JARFILE}}",
@@ -22,7 +22,7 @@
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/bash\r\n# PowerNukkit Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\napt update\r\napt install -y curl jq\r\n\r\nif [ -n \"${DL_PATH}\" ]; then\r\n    echo -e \"Using supplied download url: ${DL_PATH}\"\r\n    DOWNLOAD_URL=`eval echo $(echo ${DL_PATH} | sed -e 's\/{{\/${\/g' -e 's\/}}\/}\/g')`\r\nelse\r\n    LAST_SUCCESS=`curl -sLH 'accept: application\/json' -X 'GET' \"https:\/\/builds.powernukkit.org\/app\/rest\/builds\/?locator=buildType:${RELEASE_CHANNEL},status:success,count:1\"`\r\n    EXISTS=`echo \"$LAST_SUCCESS\" | jq '.count == 1' 2> \/dev\/null`\r\n    if [ \"${EXISTS}\" != \"true\" ]; then\r\n        RELEASE_CHANNEL=PowerNukkit_Releases\r\n        LAST_SUCCESS=`curl -sLH 'accept: application\/json' -X 'GET' \"https:\/\/builds.powernukkit.org\/app\/rest\/builds\/?locator=buildType:${RELEASE_CHANNEL},status:success,count:1\"`\r\n        EXISTS=`echo \"$LAST_SUCCESS\" | jq '.count == 1' 2> \/dev\/null`\r\n        if [ \"${EXISTS}\" != \"true\" ]; then\r\n            echo \"Could not update the server jar!\"\r\n        fi\r\n    fi\r\n    if [ \"${EXISTS}\" == \"true\" ]; then\r\n        BUILD_NUMBER=`echo \"$LAST_SUCCESS\" | jq '.build[0].id'`\r\n        FILE=`curl -sLH 'accept: application\/json' -X 'GET' \"https:\/\/builds.powernukkit.org\/app\/rest\/builds\/${BUILD_NUMBER}\/artifacts\"`\r\n        FILE=`echo $FILE | jq '.file[] | select(.name | endswith(\"-shaded.jar\")) | .content.href' 2> \/dev\/null`\r\n        if [ -z \"$FILE\" ]; then\r\n            echo \"Could not find the artifact of the build $BUILD_NUMBER to update the server jar!\"\r\n        else\r\n            DOWNLOAD_URL=`echo \"https:\/\/builds.powernukkit.org$FILE\" | sed 's\/\"\/\/g'`\r\n\t\t\techo \"Found a download at $DOWNLOAD_URL\"\r\n        fi\r\n    fi\r\nfi\r\n\r\ncd \/mnt\/server\r\necho -e \"Running curl -Lo ${SERVER_JARFILE} ${DOWNLOAD_URL}\"\r\nif [ -f \"${SERVER_JARFILE}\" ]; then\r\n    mv \"${SERVER_JARFILE}\" \"${SERVER_JARFILE}.old\"\r\nfi\r\n\r\ncurl -Lo \"${SERVER_JARFILE}\" \"${DOWNLOAD_URL}\"\r\nif [ ! -f server.properties ]; then\r\n    echo '#Minecraft server properties' > server.properties\r\n    echo 'server-port=19132' >> server.properties\r\n    echo 'server-ip=0.0.0.0' >> server.properties\r\nfi",
+            "script": "#!\/bin\/bash\r\n# PowerNukkit Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\napt update\r\napt install -y curl jq\r\nif [ -n \"${DL_PATH}\" ]; then\r\necho -e \"Using supplied download url: ${DL_PATH}\"\r\nDOWNLOAD_URL=`eval echo $(echo ${DL_PATH} | sed -e 's\/{{\/${\/g' -e 's\/}}\/}\/g')`\r\nelse\r\nLAST_SUCCESS=`curl -sLH 'accept: application\/json' -X 'GET' \"https:\/\/builds.powernukkit.org\/app\/rest\/builds\/?locator=buildType:${RELEASE_CHANNEL},status:success,count:1&guest=1\"`\r\nEXISTS=`echo \"$LAST_SUCCESS\" | jq '.count == 1' 2> \/dev\/null`\r\nif [ \"${EXISTS}\" != \"true\" ]; then\r\nRELEASE_CHANNEL=PowerNukkit_Releases\r\nLAST_SUCCESS=`curl -sLH 'accept: application\/json' -X 'GET' \"https:\/\/builds.powernukkit.org\/app\/rest\/builds\/?locator=buildType:${RELEASE_CHANNEL},status:success,count:1&guest=1\"`\r\nEXISTS=`echo \"$LAST_SUCCESS\" | jq '.count == 1' 2> \/dev\/null`\r\nif [ \"${EXISTS}\" != \"true\" ]; then\r\necho \"Could not update the server jar!\"\r\nfi\r\nfi\r\nif [ \"${EXISTS}\" == \"true\" ]; then\r\nBUILD_NUMBER=`echo \"$LAST_SUCCESS\" | jq '.build[0].id'`\r\nFILE=`curl -sLH 'accept: application\/json' -X 'GET' \"https:\/\/builds.powernukkit.org\/app\/rest\/builds\/${BUILD_NUMBER}\/artifacts?guest=1\"`\r\nFILE=`echo $FILE | jq '.file[] | select(.name | endswith(\"-shaded.jar\")) | .content.href' 2> \/dev\/null`\r\nif [ -z \"$FILE\" ]; then\r\necho \"Could not find the artifact of the build $BUILD_NUMBER to update the server jar!\"\r\nelse\r\nDOWNLOAD_URL=`echo \"https:\/\/builds.powernukkit.org$FILE?guest=1\" | sed 's\/\"\/\/g'`\r\necho \"Found a download at $DOWNLOAD_URL\"\r\nfi\r\nfi\r\nfi\r\ncd \/mnt\/server\r\necho -e \"Running curl -Lo ${SERVER_JARFILE} ${DOWNLOAD_URL}\"\r\nif [ -f \"${SERVER_JARFILE}\" ]; then\r\nmv \"${SERVER_JARFILE}\" \"${SERVER_JARFILE}.old\"\r\nfi\r\ncurl -Lo \"${SERVER_JARFILE}\" \"${DOWNLOAD_URL}\"\r\nif [ ! -f server.properties ]; then\r\necho '#Minecraft server properties' > server.properties\r\necho 'server-port=19132' >> server.properties\r\necho 'server-ip=0.0.0.0' >> server.properties\r\nfi",
             "container": "debian:buster-slim",
             "entrypoint": "bash"
         }
@@ -41,7 +41,7 @@
             "name": "Release Channel",
             "description": "",
             "env_variable": "RELEASE_CHANNEL",
-            "default_value": "PowerNukkit_Releases",
+            "default_value": "PowerNukkit_Snapshots",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string|max:255"
